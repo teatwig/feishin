@@ -10,5 +10,6 @@ declare global {
         SERVER_NAME?: string;
         SERVER_TYPE?: ServerType;
         SERVER_URL?: string;
+        REVERSE_PROXY_AUTH?: boolean;
     }
 }

@@ -95,6 +95,7 @@ declare global {
         SERVER_NAME?: string;
         SERVER_TYPE?: string;
         SERVER_URL?: string;
+        REVERSE_PROXY_AUTH?: boolean | string;
         umami?: {
             identify(unique_id: string): void;
             identify(unique_id: string, data: object): void;

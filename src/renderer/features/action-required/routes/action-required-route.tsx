@@ -7,22 +7,53 @@ import { ActionRequiredContainer } from '/@/renderer/features/action-required/co
 import { ServerCredentialRequired } from '/@/renderer/features/action-required/components/server-credential-required';
 import { ServerRequired } from '/@/renderer/features/action-required/components/server-required';
 import styles from '/@/renderer/features/action-required/routes/action-required-route.module.css';
-import { isServerLock } from '/@/renderer/features/action-required/utils/window-properties';
+import { isServerLock, isReverseProxyAuth } from '/@/renderer/features/action-required/utils/window-properties';
 import LoginRoute from '/@/renderer/features/login/routes/login-route';
 import { ServerList } from '/@/renderer/features/servers/components/server-list';
 import { AnimatedPage } from '/@/renderer/features/shared/components/animated-page';
 import { PageErrorBoundary } from '/@/renderer/features/shared/components/page-error-boundary';
 import { AppRoute } from '/@/renderer/router/routes';
-import { useCurrentServerWithCredential } from '/@/renderer/store';
+import { useAuthStoreActions, useCurrentServerWithCredential } from '/@/renderer/store';
 import { Button } from '/@/shared/components/button/button';
 import { Group } from '/@/shared/components/group/group';
 import { Icon } from '/@/shared/components/icon/icon';
 import { ScrollArea } from '/@/shared/components/scroll-area/scroll-area';
 import { Stack } from '/@/shared/components/stack/stack';
+import { ServerListItemWithCredential } from '/@/shared/types/domain-types';
+import { toServerType } from '/@/shared/types/types';
+import { nanoid } from 'nanoid';
 
 const ActionRequiredRoute = () => {
     const { t } = useTranslation();
     const currentServer = useCurrentServerWithCredential();
+
+    const { addServer, setCurrentServer } = useAuthStoreActions();
+    if (isReverseProxyAuth()) {
+        if (!currentServer) {
+            const serverType = window.SERVER_TYPE ? toServerType(window.SERVER_TYPE) : null;
+            const serverName = window.SERVER_NAME || '';
+            const serverUrl = window.SERVER_URL || '';
+            const remoteUrl = window.REMOTE_URL || '';
+            const normalizeUrl = (url: string) => url.replace(/\/$/, '');
+            const normalizedUrl = normalizeUrl(serverUrl);
+            const normalizedRemoteURL = normalizeUrl(remoteUrl);
+            const serverItem: ServerListItemWithCredential = {
+                credential: 'dummy,dummy',
+                id: nanoid(),
+                isAdmin: false, // TODO we need to fetch this from navidrome
+                name: serverName,
+                remoteUrl: normalizedRemoteURL,
+                type: serverType!,
+                url: normalizedUrl,
+                userId: 'dummyId',
+                username: 'dummyName',
+            };
+            addServer(serverItem);
+            setCurrentServer(serverItem);
+        }
+        return <Navigate to={AppRoute.HOME}/>;
+    }
+
     const isServerRequired = !currentServer;
     const isCredentialRequired = currentServer && !currentServer.credential;
 
